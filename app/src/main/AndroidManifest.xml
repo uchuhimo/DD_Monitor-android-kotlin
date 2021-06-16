@@ -16,7 +16,7 @@
         android:label="@string/app_name"
         android:supportsRtl="true"
         android:theme="@style/Theme.DD_Monitor">
-        <activity android:name=".MainActivity" android:configChanges="orientation|screenSize">
+        <activity android:name=".MainActivity" android:configChanges="screenSize|smallestScreenSize|screenLayout|orientation">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 

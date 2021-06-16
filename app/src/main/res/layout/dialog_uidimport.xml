@@ -23,6 +23,21 @@
             />
     </LinearLayout>
 
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        >
+        <EditText
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:hint="SESSDATA"
+            android:id="@+id/sessdata_edittext"
+            android:inputType="text"
+            />
+    </LinearLayout>
+
     <Button
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
@@ -41,6 +56,13 @@
             android:text="已选0项"
             android:id="@+id/selection_count_textview"
             android:padding="8dp"
+            />
+        <Button
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:id="@+id/select_all_btn"
+            android:text="全选"
+            android:enabled="true"
             />
         <Button
             android:layout_width="wrap_content"

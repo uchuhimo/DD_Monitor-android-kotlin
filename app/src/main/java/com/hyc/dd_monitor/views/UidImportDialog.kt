@@ -114,11 +114,14 @@ class UidImportDialog(context: Context) : Dialog(context) {
 
         val selectionCountText = findViewById<TextView>(R.id.selection_count_textview)
         val importBtn = findViewById<Button>(R.id.import_btn)
+        val selectAllBtn = findViewById<Button>(R.id.select_all_btn)
 
         val uidText = findViewById<EditText>(R.id.uid_edittext)
+        val sessdataText = findViewById<EditText>(R.id.sessdata_edittext)
 
         findViewById<Button>(R.id.submit_btn).setOnClickListener {
             val uid = uidText.text.toString()
+            val sessdata = sessdataText.text.toString()
 
             if (Pattern.compile("\\d+").matcher(uid).matches()) {
                 Log.d("uid", uid.toString())
@@ -130,7 +133,7 @@ class UidImportDialog(context: Context) : Dialog(context) {
                 importBtn.isEnabled = false
 
                 Toast.makeText(context, "查询中", Toast.LENGTH_SHORT).show()
-                loadMids(uid, 1)
+                loadMids(uid, sessdata, 1)
             }else{
                 Toast.makeText(context, "无效的uid", Toast.LENGTH_SHORT).show()
             }
@@ -147,6 +150,16 @@ class UidImportDialog(context: Context) : Dialog(context) {
             selectionCountText.text = "已选${selectedSet.size}项"
             importBtn.isEnabled = selectedSet.isNotEmpty()
 
+            adapter.notifyDataSetInvalidated()
+        }
+
+        selectAllBtn.setOnClickListener {
+            for (json in result) {
+                val roomId = json.getInt("room_id").toString()
+                selectedSet.add(roomId)
+            }
+            importBtn.isEnabled = selectedSet.isNotEmpty()
+            selectionCountText.text = "已选${selectedSet.size}项"
             adapter.notifyDataSetInvalidated()
         }
 
@@ -180,11 +193,16 @@ class UidImportDialog(context: Context) : Dialog(context) {
         }
     }
 
-    fun loadMids(uid: String, pn: Int) {
+    fun loadMids(uid: String, sessdata: String, pn: Int) {
         Log.d("uid", "loadmids")
         OkHttpClient().newCall(
             Request.Builder()
                 .url("https://api.bilibili.com/x/relation/followings?vmid=$uid&pn=$pn&ps=50&order=desc&jsonp=jsonp")
+                .apply {
+                    if (sessdata.isNotEmpty()) {
+                        addHeader("Cookie", "SESSDATA=$sessdata")
+                    }
+                }
 //                .addHeader("Connection", "close")
                 .build()
         ).enqueue(object : Callback {
@@ -202,7 +220,7 @@ class UidImportDialog(context: Context) : Dialog(context) {
                             for (i in 0 until list.length()) {
                                 mids.add(list.getJSONObject(i).getInt("mid"))
                             }
-                            loadMids(uid, pn + 1)
+                            loadMids(uid, sessdata, pn + 1)
                         }else{
                             loadRoomInfo()
                         }
