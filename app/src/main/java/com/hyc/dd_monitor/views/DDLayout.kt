@@ -67,13 +67,6 @@ class DDLayout(context: Context?) : LinearLayout(context) {
                     players[drop].adjustControlBar()
                 }
 
-                // 交换音量设置
-                val volume2 = players[drop].playerOptions.volume
-                players[drop].playerOptions.volume = players[drag].playerOptions.volume
-                players[drop].notifyPlayerOptionsChange()
-                players[drag].playerOptions.volume = volume2
-                players[drag].notifyPlayerOptionsChange()
-
                 context.getSharedPreferences("sp", AppCompatActivity.MODE_PRIVATE).edit {
                     this.putString("roomId$drop", players[drop].roomId).apply()
                     this.putString("roomId$drag", players[drag].roomId).apply()

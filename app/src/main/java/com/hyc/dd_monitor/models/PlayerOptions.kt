@@ -6,7 +6,7 @@ class PlayerOptions {
     var isDanmuShow = true
     var danmuSize: Int = 13
     var danmuPosition: Int = 0
-    var danmuWidth: Float = .2f
-    var danmuHeight: Float = .8f
+    var danmuWidth: Float = .15f
+    var danmuHeight: Float = 1f
     var interpreterStyle: Int = 0
 }

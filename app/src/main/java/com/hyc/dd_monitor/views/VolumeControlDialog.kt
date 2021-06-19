@@ -49,6 +49,9 @@ class VolumeControlDialog(context: Context) : Dialog(context) {
             if (slider.progress == 0) {
                 v = 50
             }
+            if (slider.progress == 50) {
+                v = 100
+            }
             slider.progress = v
             onSeekBarListener?.onProgressChanged(slider, v, true)
             onSeekBarListener?.onStopTrackingTouch(slider)

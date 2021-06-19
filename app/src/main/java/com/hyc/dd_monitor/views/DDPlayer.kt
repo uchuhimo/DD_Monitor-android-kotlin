@@ -18,9 +18,7 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.core.content.edit
 import androidx.core.net.toUri
-import com.google.android.exoplayer2.MediaItem
-import com.google.android.exoplayer2.Player
-import com.google.android.exoplayer2.SimpleExoPlayer
+import com.google.android.exoplayer2.*
 import com.google.android.exoplayer2.ui.PlayerView
 import com.google.gson.Gson
 import com.hyc.dd_monitor.R
@@ -658,12 +656,16 @@ class DDPlayer(context: Context, playerId: Int) : ConstraintLayout(context) {
                 override fun onResponse(call: Call, response: Response) {
                     response.body?.let { it2 ->
                         var url = ""
+                        val urls = mutableListOf<String>()
+                        var urlIndex = 0
                         try {
-                            url = JSONObject(it2.string())
+                            val jArray = JSONObject(it2.string())
                                 .getJSONObject("data")
                                 .getJSONArray("durl")
-                                .getJSONObject(0)
-                                .getString("url")
+                            for (i in 0 until jArray.length()) {
+                                urls.add(jArray.getJSONObject(i).getString("url"))
+                            }
+                            url = urls[0]
                         } catch (e: Exception) {
 
                         }
@@ -672,8 +674,14 @@ class DDPlayer(context: Context, playerId: Int) : ConstraintLayout(context) {
                         Log.d("proxyurl", url)
 
                         handler.post {
-                            player = SimpleExoPlayer.Builder(context).build()
-
+                            player = SimpleExoPlayer.Builder(context)
+                                .setWakeMode(C.WAKE_MODE_NETWORK)
+                                .setLoadControl(
+                                    DefaultLoadControl.Builder()
+                                        .setPrioritizeTimeOverSizeThresholds(true)
+                                        .build()
+                                )
+                                .build()
                             playerView.player = player
                             player!!.volume =
                                 if (isGlobalMuted) 0f else playerOptions.volume
@@ -683,6 +691,39 @@ class DDPlayer(context: Context, playerId: Int) : ConstraintLayout(context) {
 
                         if (!isRecording) {
                             handler.post {
+                                val bufferTime = DefaultLoadControl.DEFAULT_BUFFER_FOR_PLAYBACK_AFTER_REBUFFER_MS
+                                val checkState = { state: Int ->
+                                    {
+                                        Log.d("checkState", "$value check state ${player!!.playbackState}")
+                                        if (!playerNameBtn.text.contains("(未开播)") && player!!.playbackState == state) {
+                                            urlIndex += 1
+                                            if (urlIndex >= urls.size) {
+                                                Log.d("room", "$value reload")
+                                                roomId = roomId
+                                            } else {
+                                                url = urls[urlIndex]
+                                                Log.d("url", "$value reload $url")
+                                                player!!.setMediaItem(MediaItem.fromUri(url))
+                                            }
+                                        }
+                                    }
+                                }
+                                player!!.addListener(object : Player.EventListener {
+                                    override fun onMediaItemTransition(
+                                        mediaItem: MediaItem?,
+                                        reason: Int
+                                    ) {
+                                        if (mediaItem != null) {
+                                            handler.postDelayed(checkState(Player.STATE_IDLE), (bufferTime*(urlIndex+2L)..bufferTime*(urlIndex+3L)).random())
+                                        }
+                                    }
+                                    override fun onPlaybackStateChanged(state: Int) {
+                                        if (state == Player.STATE_BUFFERING) {
+                                            Log.d("buffering", "$value is buffering")
+                                            handler.postDelayed(checkState(Player.STATE_BUFFERING), (bufferTime*(urlIndex+2L)..bufferTime*(urlIndex+3L)).random())
+                                        }
+                                    }
+                                })
                                 player!!.setMediaItem(MediaItem.fromUri(url))
                             }
                         } else {
@@ -836,7 +877,7 @@ class DDPlayer(context: Context, playerId: Int) : ConstraintLayout(context) {
                     socketTimer = Timer()
                     socketTimer!!.schedule(object : TimerTask() {
                         override fun run() {
-                            Log.d("danmu", "heartbeat")
+                            // Log.d("danmu", "heartbeat")
                             socket?.send(
                                 byteArrayOf(
                                     0x00, 0x00, 0x00, 0x10,
@@ -910,7 +951,7 @@ class DDPlayer(context: Context, playerId: Int) : ConstraintLayout(context) {
                                 val cmd = jobj.getString("cmd")
                                 if (cmd == "DANMU_MSG") {
                                     val danmu = jobj.getJSONArray("info").getString(1)
-                                    Log.d("danmu", "$value $danmu")
+                                    // Log.d("danmu", "$value $danmu")
                                     handler.post {
                                         // 弹幕目前最多显示20条，是否要搞一个设置项？
                                         if (danmuList.count() > 20) {

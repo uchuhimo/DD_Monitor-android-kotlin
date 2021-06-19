@@ -65,6 +65,9 @@ class GlobalVolumeDialog(context: Context, val ddLayout: DDLayout) : Dialog(cont
                     if (slider.progress == 0) {
                         v = 50
                     }
+                    if (slider.progress == 50) {
+                        v = 100
+                    }
                     slider.progress = v
                     textView.text = v.toString()
                     p.volumeChangedListener.onProgressChanged(slider, v, true)
